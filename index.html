@@ -1,0 +1,470 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#F6F1E7">
+<title>Estante</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+:root{
+  --bg:#F6F1E7; --card:#FFFDF8; --ink:#2A2620; --muted:#857C6E; --line:#E4DCCB;
+  --accent:#2F5D50; --accent-ink:#FFFFFF; --accent-soft:#DCE8E2; --warn:#B4532A;
+  --t:#C2410C; --a:#2563EB; --p:#7C3AED;
+  --font:system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --serif:Georgia, "Iowan Old Style", "Times New Roman", serif;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font:16px/1.45 var(--font);-webkit-tap-highlight-color:transparent}
+button,input{font:inherit;color:inherit}
+button{background:none;border:0;cursor:pointer;padding:0}
+button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wrap{max-width:640px;margin:0 auto;padding-inline:16px;padding-block:calc(14px + env(safe-area-inset-top,0px)) calc(110px + env(safe-area-inset-bottom,0px))}
+header.top{display:flex;align-items:center;gap:8px;margin-bottom:14px}
+header.top h1{flex:1;margin:0;font:700 28px/1 var(--serif);letter-spacing:-.01em}
+.lang{display:flex;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:3px}
+.lang button{padding:6px 10px;border-radius:999px;font-weight:700;font-size:13px;color:var(--muted)}
+.lang button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+.ibtn{width:40px;height:40px;border-radius:50%;background:var(--card);border:1px solid var(--line);display:grid;place-items:center;flex:none}
+.ibtn svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.tools{display:flex;gap:8px;margin-bottom:12px}
+.search{flex:1;border:1px solid var(--line);background:var(--card);border-radius:12px;padding:10px 12px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 16px;border-radius:14px;font-weight:700;background:var(--card);border:1px solid var(--line)}
+.btn.main{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.count{color:var(--muted);font-size:14px;margin:0 0 8px}
+.list{display:flex;flex-direction:column;gap:10px}
+.book{display:flex;gap:12px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px;text-align:left;width:100%}
+.book img,.book .ph{width:52px;height:76px;border-radius:6px;object-fit:cover;flex:none;background:var(--accent-soft)}
+.book .ph{display:grid;place-items:center;font:700 22px var(--serif);color:var(--accent)}
+.book .ti{font:700 16px/1.25 var(--serif)}
+.book .au{color:var(--ink);font-size:14px;margin-top:2px}
+.book .pu{color:var(--muted);font-size:13px;margin-top:2px}
+.empty{background:var(--card);border:1px dashed var(--line);border-radius:14px;padding:22px 18px;color:var(--muted);text-align:center}
+.dock{position:fixed;left:0;right:0;bottom:0;padding:12px 16px calc(14px + env(safe-area-inset-bottom,0px));background:linear-gradient(transparent,var(--bg) 30%);display:flex;gap:10px;justify-content:center}
+.dock .btn{flex:1;max-width:300px;height:56px}
+
+/* pantallas completas */
+.screen{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;z-index:5}
+.sbar{display:flex;align-items:center;gap:10px;padding:calc(10px + env(safe-area-inset-top,0px)) 12px 10px}
+.sbar h2{flex:1;margin:0;font-size:18px}
+.cam{flex:1;position:relative;background:#000;min-height:0;overflow:hidden}
+.cam video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.guide{position:absolute;left:10%;right:10%;top:38%;height:22%;border:3px solid rgba(255,255,255,.9);border-radius:14px;box-shadow:0 0 0 2000px rgba(0,0,0,.35)}
+.camhint{position:absolute;left:0;right:0;bottom:16px;text-align:center;color:#fff;font-weight:700;text-shadow:0 1px 4px #000;padding:0 16px}
+.manual{display:flex;gap:8px;padding:12px 16px calc(14px + env(safe-area-inset-bottom,0px))}
+.manual input{flex:1;border:1px solid var(--line);background:var(--card);border-radius:12px;padding:12px}
+.photo{flex:1;position:relative;min-height:0;overflow:auto;background:#1b1a18;touch-action:pan-x pan-y pinch-zoom}
+.photo .inner{position:relative;margin:0 auto}
+.photo img{display:block;width:100%;height:auto}
+.box{position:absolute;border:2px solid rgba(255,255,255,.75);border-radius:4px;background:rgba(255,255,255,.08)}
+.box.t{border-color:var(--t);background:rgba(194,65,12,.22)} .box.a{border-color:var(--a);background:rgba(37,99,235,.22)} .box.p{border-color:var(--p);background:rgba(124,58,237,.22)}
+.busy{position:absolute;inset:0;display:grid;place-items:center;color:#fff;text-align:center;padding:20px;background:rgba(0,0,0,.45)}
+.form{padding:12px 16px calc(14px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:8px;background:var(--bg);max-height:58%;overflow:auto}
+.pick{display:flex;gap:6px}
+.pick button{flex:1;padding:8px 6px;border-radius:10px;font-weight:700;font-size:14px;border:2px solid var(--line);background:var(--card)}
+.pick button[aria-pressed="true"].t{border-color:var(--t);color:var(--t)} .pick button[aria-pressed="true"].a{border-color:var(--a);color:var(--a)} .pick button[aria-pressed="true"].p{border-color:var(--p);color:var(--p)}
+.field{display:flex;flex-direction:column;gap:2px}
+.field label{font-size:12px;font-weight:700;color:var(--muted)}
+.field{min-width:0}
+.field input{width:100%;min-width:0;border:1px solid var(--line);background:var(--card);border-radius:10px;padding:10px 12px}
+.row2{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:8px}
+.actions{display:flex;gap:8px;margin-top:4px}
+.actions .btn{flex:1}
+.note{font-size:13px;color:var(--muted);margin:0}
+.help{padding:0 18px 30px;overflow:auto}
+.help h3{margin:18px 0 6px;font:700 18px var(--serif)}
+.help p,.help li{color:#4b453c}
+.toast{position:fixed;left:50%;top:calc(16px + env(safe-area-inset-top,0px));transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 16px;border-radius:12px;font-weight:600;font-size:14px;max-width:calc(100% - 32px);text-align:center;z-index:20}
+</style>
+</head>
+<body>
+
+<div class="wrap" id="home">
+  <header class="top">
+    <h1>Estante</h1>
+    <div class="lang"><button id="l-es">ES</button><button id="l-en">EN</button></div>
+    <button class="ibtn" id="helpbtn" data-aria="help"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6V14M12 17.5v.01"/></svg></button>
+    <button class="ibtn" id="exportbtn" data-aria="export"><svg viewBox="0 0 24 24"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg></button>
+  </header>
+  <div class="tools"><input class="search" id="q" type="search" data-ph="search"></div>
+  <p class="count" id="count"></p>
+  <div class="list" id="list"></div>
+</div>
+
+<div class="dock" id="dock">
+  <button class="btn main" id="scanbtn"><svg viewBox="0 0 24 24"><path d="M4 6v12M7 6v12M10 6v12M14 6v12M17 6v12M20 6v12"/></svg><span data-t="scan"></span></button>
+  <button class="btn" id="photobtn"><svg viewBox="0 0 24 24"><path d="M4 8h3l2-2h6l2 2h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg><span data-t="photo"></span></button>
+</div>
+
+<!-- escanear código de barras -->
+<section class="screen" id="scanview" hidden>
+  <div class="sbar"><button class="ibtn" id="scanclose" data-aria="close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button><h2 data-t="scanTitle"></h2></div>
+  <div class="cam"><video id="video" playsinline muted></video><div class="guide"></div><div class="camhint" id="scanhint"></div></div>
+  <div class="manual"><input id="isbnin" inputmode="numeric" data-ph="isbnPh"><button class="btn main" id="isbngo" data-t="search"></button></div>
+</section>
+
+<!-- foto de tapa con texto leído -->
+<section class="screen" id="photoview" hidden>
+  <div class="sbar"><button class="ibtn" id="photoclose" data-aria="close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button><h2 id="phtitle"></h2></div>
+  <div class="photo" id="photo"><div class="inner" id="inner"><img id="pimg" alt=""></div><div class="busy" id="busy" hidden></div></div>
+  <div class="form" id="form">
+    <p class="note" id="tapnote" data-t="tapNote"></p>
+    <div class="pick" id="pick">
+      <button class="t" data-f="title" aria-pressed="true" data-t="fTitle"></button>
+      <button class="a" data-f="author" aria-pressed="false" data-t="fAuthor"></button>
+      <button class="p" data-f="publisher" aria-pressed="false" data-t="fPublisher"></button>
+    </div>
+    <div class="field"><label for="f-title" data-t="fTitle"></label><input id="f-title"></div>
+    <div class="field"><label for="f-author" data-t="fAuthor"></label><input id="f-author"></div>
+    <div class="row2">
+      <div class="field"><label for="f-publisher" data-t="fPublisher"></label><input id="f-publisher"></div>
+      <div class="field"><label for="f-year" data-t="fYear"></label><input id="f-year" inputmode="numeric"></div>
+    </div>
+    <div class="field"><label for="f-isbn">ISBN</label><input id="f-isbn" inputmode="numeric"></div>
+    <div class="actions">
+      <button class="btn" id="lookup" data-t="lookup"></button>
+      <button class="btn" id="del" hidden data-t="del"></button>
+      <button class="btn main" id="save" data-t="save"></button>
+    </div>
+  </div>
+  <input type="file" id="file" accept="image/*" capture="environment" hidden>
+</section>
+
+<!-- ayuda -->
+<section class="screen" id="helpview" hidden>
+  <div class="sbar"><button class="ibtn" id="helpclose" data-aria="close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button><h2 data-t="help"></h2></div>
+  <div class="help" id="helptext"></div>
+</section>
+
+<div class="toast" id="toast" hidden></div>
+
+<script>
+(() => {
+const $ = s => document.querySelector(s);
+
+// ---------- idiomas ----------
+const T = {
+  es: {
+    help:'Cómo se usa', export:'Exportar', search:'Buscar', scan:'Código de barras', photo:'Foto de tapa', close:'Cerrar',
+    count:n => n === 1 ? '1 libro' : `${n} libros`, emptyList:'Todavía no hay libros. Escaneá el código de barras de la contratapa o sacale una foto a la tapa.',
+    scanTitle:'Escaneá el código de barras', scanHint:'Apuntá al código de barras de la contratapa (ISBN)', isbnPh:'O escribí el ISBN',
+    looking:'Buscando el libro…', notFound:'No encontré ese ISBN. Completá los datos a mano o con una foto de la tapa.',
+    camFail:'No se pudo abrir la cámara. Escribí el ISBN abajo.', noScanner:'Este teléfono no puede leer códigos: escribí el ISBN abajo.',
+    photoTitle:'Tocá el texto de la tapa', editTitle:'Editar libro', newTitle:'Libro nuevo',
+    reading:'Leyendo el texto de la tapa… (la primera vez tarda más)', readFail:'No pude leer texto. Completá a mano.',
+    tapNote:'Elegí qué completar y tocá el texto en la foto. Tocar varias líneas las junta.',
+    fTitle:'Título', fAuthor:'Autor', fPublisher:'Editorial', fYear:'Año',
+    lookup:'Buscar datos', save:'Guardar', del:'Borrar', delSure:'¿Borrar? Tocá de nuevo',
+    saved:'Guardado', deleted:'Borrado', needTitle:'Falta el título', lookupNone:'No encontré datos con ese título y autor',
+    exported:'Archivos listos', exportEmpty:'No hay libros para exportar',
+    helpHtml:`<h3>1. Con código de barras (lo mejor)</h3><p>Tocá <b>Código de barras</b> y apuntá a la contratapa. Cuando lo lee, busca solo el título, el autor, la editorial y el año. Revisás y tocás <b>Guardar</b>.</p>
+      <h3>2. Con foto de la tapa</h3><p>Para libros sin código: tocá <b>Foto de tapa</b> y sacale una foto de frente, con buena luz. La app lee el texto y marca cada línea con un recuadro.</p>
+      <ul><li>Arriba elegís qué completar: <b>Título</b>, <b>Autor</b> o <b>Editorial</b>.</li><li>Tocás el recuadro con ese texto en la foto. Si son varias líneas, tocalas todas.</li><li><b>Buscar datos</b> completa lo que falte usando el título y el autor.</li></ul>
+      <h3>3. Corregir</h3><p>Todo se puede escribir a mano. Tocá un libro de la lista para editarlo o borrarlo.</p>
+      <h3>4. Exportar</h3><p>El botón ⬇ arriba baja dos archivos: <b>CSV</b> (abre en Excel o Google Sheets) y <b>TXT</b>.</p>
+      <h3>¿Dónde se guarda?</h3><p>En este teléfono. No se sube a internet.</p>`
+  },
+  en: {
+    help:'How to use', export:'Export', search:'Search', scan:'Barcode', photo:'Cover photo', close:'Close',
+    count:n => n === 1 ? '1 book' : `${n} books`, emptyList:'No books yet. Scan the barcode on the back cover or take a photo of the front cover.',
+    scanTitle:'Scan the barcode', scanHint:'Point at the barcode on the back cover (ISBN)', isbnPh:'Or type the ISBN',
+    looking:'Looking up the book…', notFound:'ISBN not found. Fill in the details by hand or with a cover photo.',
+    camFail:'Could not open the camera. Type the ISBN below.', noScanner:'This phone cannot read barcodes: type the ISBN below.',
+    photoTitle:'Tap the text on the cover', editTitle:'Edit book', newTitle:'New book',
+    reading:'Reading the cover text… (slower the first time)', readFail:'No text found. Fill in by hand.',
+    tapNote:'Choose what to fill in and tap the text on the photo. Tapping several lines joins them.',
+    fTitle:'Title', fAuthor:'Author', fPublisher:'Publisher', fYear:'Year',
+    lookup:'Find details', save:'Save', del:'Delete', delSure:'Delete? Tap again',
+    saved:'Saved', deleted:'Deleted', needTitle:'Title is missing', lookupNone:'No details found for that title and author',
+    exported:'Files ready', exportEmpty:'No books to export',
+    helpHtml:`<h3>1. With the barcode (best)</h3><p>Tap <b>Barcode</b> and point at the back cover. Once it reads it, the title, author, publisher and year are filled in automatically. Check them and tap <b>Save</b>.</p>
+      <h3>2. With a cover photo</h3><p>For books without a barcode: tap <b>Cover photo</b> and shoot the cover straight on, in good light. The app reads the text and draws a box around each line.</p>
+      <ul><li>At the top, choose what to fill in: <b>Title</b>, <b>Author</b> or <b>Publisher</b>.</li><li>Tap the box with that text on the photo. If it spans several lines, tap them all.</li><li><b>Find details</b> fills in the rest using the title and author.</li></ul>
+      <h3>3. Fix things</h3><p>Everything can be typed by hand. Tap a book in the list to edit or delete it.</p>
+      <h3>4. Export</h3><p>The ⬇ button at the top downloads two files: <b>CSV</b> (opens in Excel or Google Sheets) and <b>TXT</b>.</p>
+      <h3>Where is it saved?</h3><p>On this phone. Nothing is uploaded.</p>`
+  }
+};
+let lang = (() => { try { return localStorage.getItem('estante-lang'); } catch { return null; } })() || ((navigator.language || '').toLowerCase().startsWith('es') ? 'es' : 'en');
+const t = (k, ...a) => { const v = T[lang][k]; return typeof v === 'function' ? v(...a) : v; };
+function applyLang(){
+  document.documentElement.lang = lang;
+  document.querySelectorAll('[data-t]').forEach(el => el.textContent = t(el.dataset.t));
+  document.querySelectorAll('[data-ph]').forEach(el => el.placeholder = t(el.dataset.ph));
+  document.querySelectorAll('[data-aria]').forEach(el => el.setAttribute('aria-label', t(el.dataset.aria)));
+  $('#l-es').setAttribute('aria-pressed', lang === 'es'); $('#l-en').setAttribute('aria-pressed', lang === 'en');
+  $('#helptext').innerHTML = t('helpHtml');
+  renderList();
+}
+const setLang = l => { lang = l; try { localStorage.setItem('estante-lang', l); } catch {} applyLang(); };
+$('#l-es').onclick = () => setLang('es'); $('#l-en').onclick = () => setLang('en');
+
+// ---------- almacenamiento (IndexedDB, en el teléfono) ----------
+let books = [];
+const dbp = new Promise((res, rej) => { const r = indexedDB.open('estante', 1); r.onupgradeneeded = () => r.result.createObjectStore('books', { keyPath: 'id' }); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); });
+const tx = async (mode, fn) => { const db = await dbp; return new Promise((res, rej) => { const x = db.transaction('books', mode), s = x.objectStore('books'), out = fn(s); x.oncomplete = () => res(out && out.result); x.onerror = () => rej(x.error); }); };
+const loadAll = () => tx('readonly', s => s.getAll());
+const putBook = b => tx('readwrite', s => s.put(b));
+const delBook = id => tx('readwrite', s => s.delete(id));
+
+// ---------- lista ----------
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function renderList(){
+  const q = $('#q').value.trim().toLowerCase();
+  const shown = books.filter(b => !q || [b.title, b.author, b.publisher, b.isbn].join(' ').toLowerCase().includes(q)).sort((a, b) => b.added - a.added);
+  $('#count').textContent = t('count', books.length);
+  $('#list').innerHTML = books.length ? shown.map(b => `<button class="book" data-id="${b.id}">${b.cover ? `<img src="${esc(b.cover)}" alt="" loading="lazy">` : `<div class="ph">${esc((b.title || '?')[0])}</div>`}<div><div class="ti">${esc(b.title)}</div><div class="au">${esc(b.author)}</div><div class="pu">${esc([b.publisher, b.year, b.isbn && 'ISBN ' + b.isbn].filter(Boolean).join(' · '))}</div></div></button>`).join('')
+    : `<div class="empty">${t('emptyList')}</div>`;
+  document.querySelectorAll('.book').forEach(el => el.onclick = () => openEditor(books.find(b => b.id === el.dataset.id)));
+}
+$('#q').oninput = renderList;
+
+// ---------- búsqueda de datos (Open Library, después Google Books) ----------
+const cleanIsbn = s => String(s || '').replace(/[^0-9Xx]/g, '').toUpperCase();
+function isbnValid(s){
+  if (s.length === 13) { let sum = 0; for (let i = 0; i < 12; i++) sum += +s[i] * (i % 2 ? 3 : 1); return (10 - sum % 10) % 10 === +s[12]; }
+  if (s.length === 10) { let sum = 0; for (let i = 0; i < 10; i++) sum += (s[i] === 'X' ? 10 : +s[i]) * (10 - i); return sum % 11 === 0; }
+  return false;
+}
+const yearOf = s => (String(s || '').match(/\d{4}/) || [''])[0];
+async function byIsbn(isbn){
+  try {
+    const d = await (await fetch(`https://openlibrary.org/api/books?bibkeys=ISBN:${isbn}&format=json&jscmd=data`)).json();
+    const v = d['ISBN:' + isbn];
+    if (v) return { title: v.title + (v.subtitle ? ': ' + v.subtitle : ''), author: (v.authors || []).map(a => a.name).join(', '), publisher: (v.publishers || []).map(p => p.name).join(', '), year: yearOf(v.publish_date), isbn, cover: v.cover ? (v.cover.medium || v.cover.small) : '' };
+  } catch {}
+  try {
+    const d = await (await fetch(`https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}`)).json();
+    const v = d.items && d.items[0] && d.items[0].volumeInfo;
+    if (v) return { title: v.title + (v.subtitle ? ': ' + v.subtitle : ''), author: (v.authors || []).join(', '), publisher: v.publisher || '', year: yearOf(v.publishedDate), isbn, cover: v.imageLinks ? (v.imageLinks.thumbnail || '').replace('http:', 'https:') : '' };
+  } catch {}
+  return null;
+}
+async function byTitle(title, author){
+  try {
+    const u = `https://openlibrary.org/search.json?limit=1&fields=title,author_name,publisher,first_publish_year,isbn&title=${encodeURIComponent(title)}${author ? '&author=' + encodeURIComponent(author) : ''}`;
+    const d = await (await fetch(u)).json(), v = d.docs && d.docs[0];
+    if (v) return { title: v.title, author: (v.author_name || []).join(', '), publisher: (v.publisher || [])[0] || '', year: v.first_publish_year ? String(v.first_publish_year) : '', isbn: (v.isbn || []).find(x => x.length === 13) || '' };
+  } catch {}
+  return null;
+}
+
+// ---------- escáner de código de barras ----------
+let stream = null, scanLoop = null, zxReader = null;
+async function openScanner(){
+  $('#scanview').hidden = false; $('#scanhint').textContent = t('scanHint'); $('#isbnin').value = '';
+  const video = $('#video');
+  const found = async raw => { const s = cleanIsbn(raw); if ((s.startsWith('978') || s.startsWith('979') || s.length === 10) && isbnValid(s)) { stopScanner(); if (navigator.vibrate) try { navigator.vibrate(40); } catch {} await lookupIsbn(s); } };
+  const native = 'BarcodeDetector' in window && (await BarcodeDetector.getSupportedFormats().catch(() => [])).includes('ean_13');
+  try {
+    if (native) {
+      stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment', width: { ideal: 1280 } }, audio: false });
+      video.srcObject = stream; await video.play();
+      const det = new BarcodeDetector({ formats: ['ean_13', 'ean_8', 'upc_a'] });
+      scanLoop = setInterval(async () => { if (video.readyState < 2) return; try { const r = await det.detect(video); if (r[0]) found(r[0].rawValue); } catch {} }, 180);
+    } else {
+      if (!window.ZXing) await new Promise((res, rej) => { const s = document.createElement('script'); s.src = 'https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js'; s.onload = res; s.onerror = rej; document.head.appendChild(s); });
+      zxReader = new ZXing.BrowserMultiFormatReader();
+      await zxReader.decodeFromConstraints({ video: { facingMode: 'environment' } }, video, r => { if (r) found(r.getText()); });
+    }
+  } catch { $('#scanhint').textContent = native === false && !window.ZXing ? t('noScanner') : t('camFail'); }
+}
+function stopScanner(){
+  clearInterval(scanLoop); scanLoop = null;
+  if (zxReader) { try { zxReader.reset(); } catch {} zxReader = null; }
+  if (stream) { stream.getTracks().forEach(tr => tr.stop()); stream = null; }
+  $('#scanview').hidden = true;
+}
+async function lookupIsbn(isbn){
+  toast(t('looking'));
+  const info = await byIsbn(isbn);
+  if (!info) toast(t('notFound'));
+  openEditor(info || { isbn }, { isNew: true });
+}
+$('#scanbtn').onclick = openScanner;
+$('#scanclose').onclick = stopScanner;
+$('#isbngo').onclick = () => { const s = cleanIsbn($('#isbnin').value); if (!s) return; stopScanner(); lookupIsbn(s); };
+
+// ---------- editor (sirve para foto, código y edición) ----------
+let editing = null, field = 'title', tapped = {};
+const F = ['title', 'author', 'publisher', 'year', 'isbn'];
+function openEditor(book, { isNew = false, photo = null } = {}){
+  editing = { ...(book || {}), id: book && book.id };
+  $('#photoview').hidden = false;
+  $('#phtitle').textContent = photo ? t('photoTitle') : isNew || !editing.id ? t('newTitle') : t('editTitle');
+  F.forEach(f => $('#f-' + f).value = editing[f] || '');
+  $('#photo').hidden = !photo; $('#pick').hidden = !photo; $('#tapnote').hidden = !photo;
+  $('#del').hidden = !editing.id; $('#del').textContent = t('del'); delArmed = false;
+  tapped = {}; setField('title');
+}
+function setField(f){ field = f; document.querySelectorAll('#pick button').forEach(b => b.setAttribute('aria-pressed', b.dataset.f === f)); }
+document.querySelectorAll('#pick button').forEach(b => b.onclick = () => setField(b.dataset.f));
+const closeEditor = () => { $('#photoview').hidden = true; editing = null; };
+$('#photoclose').onclick = closeEditor;
+
+$('#save').onclick = async () => {
+  const b = { ...editing };
+  F.forEach(f => b[f] = $('#f-' + f).value.trim());
+  b.isbn = cleanIsbn(b.isbn);
+  if (!b.title) return toast(t('needTitle'));
+  b.id = b.id || 'b' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  b.added = b.added || Date.now();
+  await putBook(b);
+  books = books.filter(x => x.id !== b.id).concat(b);
+  renderList(); closeEditor(); toast(t('saved'));
+};
+let delArmed = false;
+$('#del').onclick = async () => {
+  if (!delArmed) { delArmed = true; $('#del').textContent = t('delSure'); return; }
+  await delBook(editing.id); books = books.filter(x => x.id !== editing.id); renderList(); closeEditor(); toast(t('deleted'));
+};
+$('#lookup').onclick = async () => {
+  const isbn = cleanIsbn($('#f-isbn').value), title = $('#f-title').value.trim(), author = $('#f-author').value.trim();
+  toast(t('looking'));
+  const info = isbn && isbnValid(isbn) ? await byIsbn(isbn) : title ? await byTitle(title, author) : null;
+  if (!info) return toast(t('lookupNone'));
+  F.forEach(f => { if (info[f] && !$('#f-' + f).value.trim()) $('#f-' + f).value = info[f]; });
+  if (info.cover && !editing.cover) editing.cover = info.cover;
+  $('#toast').hidden = true;
+};
+
+// ---------- foto de tapa + lectura de texto ----------
+$('#photobtn').onclick = () => { $('#file').value = ''; $('#file').click(); };
+let tWorker = null;
+async function getWorker(){
+  if (tWorker) return tWorker;
+  if (!window.Tesseract) await new Promise((res, rej) => { const s = document.createElement('script'); s.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@7.0.0/dist/tesseract.min.js'; s.onload = res; s.onerror = rej; document.head.appendChild(s); });
+  return tWorker = await Tesseract.createWorker(['spa', 'eng']);
+}
+// mayúsculas sostenidas → "Título Así"
+const SMALL = new Set(['de','del','la','las','el','los','y','e','o','en','a','al','por','para','con','un','una','of','the','and','in','on','to','for','a','an']);
+function niceCase(s){
+  s = s.replace(/[|_~^*=<>{}\[\]\\]/g, ' ').replace(/\s+/g, ' ').trim();
+  const letters = s.replace(/[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ]/g, '');
+  if (letters && letters === letters.toUpperCase()) s = s.toLowerCase().split(' ').map((w, i) => i && SMALL.has(w) ? w : w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+  return s;
+}
+$('#file').onchange = async e => {
+  const f = e.target.files[0]; if (!f) return;
+  // achica la foto (más rápido y liviano) y guarda una miniatura para la lista
+  const bmp = await createImageBitmap(f);
+  const k = Math.min(2, 1600 / Math.max(bmp.width, bmp.height));   // fotos chicas se agrandan un poco para leer mejor
+  const c = document.createElement('canvas'); c.width = Math.round(bmp.width * k); c.height = Math.round(bmp.height * k);
+  c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height);
+  const th = document.createElement('canvas'), tk = 160 / Math.max(c.width, c.height); th.width = Math.round(c.width * tk); th.height = Math.round(c.height * tk);
+  th.getContext('2d').drawImage(c, 0, 0, th.width, th.height);
+  openEditor({ cover: th.toDataURL('image/jpeg', .7) }, { isNew: true, photo: true });
+  const img = $('#pimg'); img.src = c.toDataURL('image/jpeg', .9);
+  document.querySelectorAll('.box').forEach(b => b.remove());
+  $('#busy').hidden = false; $('#busy').textContent = t('reading');
+  try {
+    const w = await getWorker();
+    // dos pasadas: texto oscuro sobre claro y texto claro sobre oscuro (tapas con fondo oscuro)
+    const lines = [];
+    for (const pass of prepared(c)) {
+      const { data } = await w.recognize(pass, {}, { blocks: true });
+      (data.blocks || []).forEach(b => (b.paragraphs || []).forEach(p => (p.lines || []).forEach(l => {
+        const text = niceCase(l.text || '');
+        if (!looksLikeText(text) || l.confidence < 50) return;
+        if (lines.some(o => overlap(o.bb, l.bbox) > .5)) return;
+        lines.push({ text, bb: l.bbox, h: l.bbox.y1 - l.bbox.y0 });
+      })));
+    }
+    $('#busy').hidden = true;
+    if (!lines.length) { toast(t('readFail')); return; }
+    drawBoxes(lines, c.width, c.height);
+    autoGuess(lines);
+  } catch { $('#busy').textContent = t('readFail'); }
+};
+// descarta "texto" que en realidad es parte del dibujo
+function looksLikeText(s){
+  const letters = (s.match(/\p{L}/gu) || []).length, total = s.replace(/\s/g, '').length;
+  const words = s.split(' ').filter(w => (w.match(/\p{L}/gu) || []).length >= 3);
+  return total >= 2 && letters / total >= .75 && words.length >= 1;
+}
+function overlap(a, b){
+  const x = Math.max(0, Math.min(a.x1, b.x1) - Math.max(a.x0, b.x0)), y = Math.max(0, Math.min(a.y1, b.y1) - Math.max(a.y0, b.y0));
+  return x * y / Math.min((a.x1 - a.x0) * (a.y1 - a.y0), (b.x1 - b.x0) * (b.y1 - b.y0));
+}
+// versión en grises con contraste estirado, y la misma invertida
+function prepared(src){
+  const out = [], W = src.width, H = src.height, im = src.getContext('2d').getImageData(0, 0, W, H), g = new Uint8ClampedArray(W * H);
+  let lo = 255, hi = 0;
+  for (let i = 0; i < g.length; i++) { const j = i * 4, v = Math.max(im.data[j], im.data[j+1], im.data[j+2]); g[i] = v; if (v < lo) lo = v; if (v > hi) hi = v; }
+  const k = 255 / Math.max(1, hi - lo);
+  for (const inv of [false, true]) {
+    const c = document.createElement('canvas'); c.width = W; c.height = H;
+    const o = c.getContext('2d').createImageData(W, H);
+    for (let i = 0; i < g.length; i++) { const v = (g[i] - lo) * k, j = i * 4; o.data[j] = o.data[j+1] = o.data[j+2] = inv ? 255 - v : v; o.data[j+3] = 255; }
+    c.getContext('2d').putImageData(o, 0, 0); out.push(c);
+  }
+  return out;
+}
+function drawBoxes(lines, W, H){
+  const inner = $('#inner');
+  lines.forEach((l, i) => {
+    const d = document.createElement('button');
+    d.className = 'box'; d.dataset.i = i;
+    Object.assign(d.style, { left: (l.bb.x0 / W * 100) + '%', top: (l.bb.y0 / H * 100) + '%', width: ((l.bb.x1 - l.bb.x0) / W * 100) + '%', height: ((l.bb.y1 - l.bb.y0) / H * 100) + '%' });
+    d.setAttribute('aria-label', l.text);
+    d.onclick = () => assign(l.text, d);
+    inner.appendChild(d); l.el = d;
+  });
+}
+// el primer toque reemplaza lo adivinado; los siguientes agregan
+function assign(text, el){
+  const inp = $('#f-' + field), cls = { title: 't', author: 'a', publisher: 'p' }[field];
+  if (el.classList.contains(cls)) { el.classList.remove(cls); inp.value = inp.value.replace(text, '').replace(/\s+/g, ' ').trim(); return; }
+  inp.value = tapped[field] ? (inp.value + ' ' + text).trim() : text;
+  if (!tapped[field]) document.querySelectorAll('.box.' + cls).forEach(b => b.classList.remove(cls));
+  tapped[field] = true; el.classList.remove('t', 'a', 'p'); el.classList.add(cls);
+}
+// adivina: título = letras más grandes; autor = línea que parece un nombre
+function autoGuess(lines){
+  const byH = [...lines].sort((a, b) => b.h - a.h);
+  const top = byH[0], title = lines.filter(l => l.h >= top.h * .78 && Math.abs(l.bb.y0 - top.bb.y0) < top.h * 3.5).sort((a, b) => a.bb.y0 - b.bb.y0);
+  const isName = s => { const w = s.split(' ').filter(Boolean); return w.length >= 2 && w.length <= 4 && w.every(x => /^[\p{Lu}][\p{L}.'-]*$/u.test(x)); };
+  const author = byH.find(l => !title.includes(l) && isName(l.text));
+  if (title.length) { $('#f-title').value = title.map(l => l.text).join(' '); title.forEach(l => l.el.classList.add('t')); }
+  if (author) { $('#f-author').value = author.text; author.el.classList.add('a'); }
+  setField(author ? 'title' : 'author');
+}
+
+// ---------- exportar ----------
+function download(name, text, type){
+  const blob = new Blob([text], { type }), a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+$('#exportbtn').onclick = async () => {
+  if (!books.length) return toast(t('exportEmpty'));
+  const list = [...books].sort((a, b) => (a.author || '').localeCompare(b.author || '') || a.title.localeCompare(b.title));
+  const q = v => '"' + String(v ?? '').replace(/"/g, '""') + '"';
+  const head = [t('fTitle'), t('fAuthor'), t('fPublisher'), t('fYear'), 'ISBN'];
+  const csv = '﻿' + [head, ...list.map(b => [b.title, b.author, b.publisher, b.year, b.isbn])].map(r => r.map(q).join(',')).join('\r\n');
+  const txt = list.map(b => `${b.title} — ${b.author || '?'}${b.publisher || b.year ? ` (${[b.publisher, b.year].filter(Boolean).join(', ')})` : ''}${b.isbn ? ' · ISBN ' + b.isbn : ''}`).join('\n') + '\n';
+  const stamp = new Date().toISOString().slice(0, 10);
+  download(`estante-${stamp}.csv`, csv, 'text/csv;charset=utf-8');
+  setTimeout(() => download(`estante-${stamp}.txt`, txt, 'text/plain;charset=utf-8'), 600);
+  toast(t('exported'));
+};
+
+// ---------- ayuda ----------
+$('#helpbtn').onclick = () => $('#helpview').hidden = false;
+$('#helpclose').onclick = () => $('#helpview').hidden = true;
+
+let tt;
+function toast(msg){ const el = $('#toast'); el.textContent = msg; el.hidden = false; clearTimeout(tt); tt = setTimeout(() => el.hidden = true, 2800); }
+
+applyLang();
+loadAll().then(all => { books = all || []; renderList(); if (!books.length) { try { if (!localStorage.getItem('estante-seen')) { localStorage.setItem('estante-seen', '1'); $('#helpview').hidden = false; } } catch {} } });
+if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
+if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
+})();
+</script>
+</body>
+</html>
